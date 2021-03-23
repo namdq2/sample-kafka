@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutionException;
 
 public class ProducerDemoKeys {
 
-  private static Logger logger = LoggerFactory.getLogger(ProducerDemoKeys.class);
+  private static final Logger logger = LoggerFactory.getLogger(ProducerDemoKeys.class);
 
   public static void main(String[] args) throws ExecutionException, InterruptedException {
     String bootstrapServer = "localhost:9092";
