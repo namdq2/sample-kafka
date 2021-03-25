@@ -1,36 +1,22 @@
 package com.namdq.kafka.tutorial1;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
-
-import java.util.Properties;
 
 public class ProducerDemo {
 
   public static void main(String[] args) {
-    String bootstrapServer = "localhost:9092";
+    String topic = "first-topic";
 
-    // create producer properties
-    Properties properties = new Properties();
-    properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer);
-    properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-    properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    try (KafkaProducer<String, String> producer = new KafkaProducer<>(KafkaConfig.getProducerProperties())) {
+      // create producer record
+      ProducerRecord<String, String> record = new ProducerRecord<>(topic, "This is a message from ProducerDemo");
 
-    // create producer
-    KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
+      // send data - asynchronous
+      producer.send(record);
 
-    // create producer record
-    ProducerRecord<String, String> record = new ProducerRecord<String, String>("first-topic", "This is a message from ProducerDemo");
-
-    // send data - asynchronous
-    producer.send(record);
-
-    // flush data
-    producer.flush();
-
-    //flush and close producer
-    producer.close();
+      // flush data
+      producer.flush();
+    }
   }
 }
