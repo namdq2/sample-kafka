@@ -1,6 +1,7 @@
 package com.namdq.kafka.tutorial2;
 
 import com.google.common.collect.Lists;
+import com.namdq.kafka.tutorial1.KafkaConfig;
 import com.twitter.hbc.ClientBuilder;
 import com.twitter.hbc.core.Client;
 import com.twitter.hbc.core.Constants;
@@ -10,6 +11,10 @@ import com.twitter.hbc.core.endpoint.StatusesFilterEndpoint;
 import com.twitter.hbc.core.processor.StringDelimitedProcessor;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
+import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +50,17 @@ public class TwitterProducer {
     client.connect();
 
     // create a kafka producer
+    KafkaProducer<String, String> producer = createKafkaProducer();
+
+    // add a shutdown hook
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      logger.info("stopping application...");
+      logger.info("shutting down client from twitter...");
+      client.stop();
+      logger.info("closing producer...");
+      producer.close();
+      logger.info("done!");
+    }));
 
     // loop to send tweets to kafka
     // on a different thread, or multiple different threads....
@@ -58,9 +74,18 @@ public class TwitterProducer {
       }
       if (msg != null) {
         logger.info(msg);
+        producer.send(new ProducerRecord<>("twitter-tweets", null, msg), (metadata, exception) -> {
+          if (exception != null) {
+            logger.error("Something had happened.", exception);
+          }
+        });
       }
     }
     logger.info("End of application");
+  }
+
+  private KafkaProducer<String, String> createKafkaProducer() {
+    return new KafkaProducer<>(KafkaConfig.getProducerProperties());
   }
 
   private Client createTwitterClient(BlockingQueue<String> msgQueue) {
